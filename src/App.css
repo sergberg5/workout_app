@@ -36,3 +36,41 @@
     transform: rotate(360deg);
   }
 }
+
+#main_header {
+  text-align: center;
+}
+
+#selector_row > * {
+  margin: 25px 25px 25px 25px;
+}
+
+#workout_item {
+  text-align: center;
+  border-width: 2px;
+  border-color: #282c34;
+  border-style: solid;
+}
+
+#current_workout {
+  text-align: center;
+  border-width: 2px;
+  border-color: #282c34;
+  border-style: solid;
+}
+
+#workout {
+  text-align: center;
+}
+
+#main_app_div {
+  text-align: center;
+}
+
+#number_input {
+  display: inline;
+}
+
+.display_static {
+  display: inline;
+}

@@ -1,81 +1,223 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import './App.css';
+import { formatDate } from './utils';
+import config from './config.json';
 
 const App = () => {
+  const [InExerciseScreen, setInExerciseScreen] = useState(false);
   const [exercises, setExercises] = useState([]);
-  const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
-  const [restTime, setRestTime] = useState(5); // Default rest time of 5 seconds
-  const [isResting, setIsResting] = useState(false);
-
-  const handleExerciseSubmit = (exercise) => {
-    setExercises([...exercises, exercise]);
-  };
-
-  const handleRestTimer = () => {
-    setIsResting(true);
-    setTimeout(() => {
-      setIsResting(false);
-      setCurrentExerciseIndex(currentExerciseIndex + 1);
-    }, restTime * 1000); // Convert seconds to milliseconds
-  };
 
   return (
     <div>
-      <h1>Exercise App</h1>
-      <ExerciseForm onSubmit={handleExerciseSubmit} />
-      <ExerciseList exercises={exercises} currentExerciseIndex={currentExerciseIndex} />
-      {isResting && <RestTimer restTime={restTime} />}
-      {!isResting && currentExerciseIndex < exercises.length && (
-        <button onClick={handleRestTimer}>Start Rest Timer</button>
-      )}
-      <input
-        type="number"
-        value={restTime}
-        onChange={(e) => setRestTime(parseInt(e.target.value))}
-        placeholder="Rest Timer (seconds)"
-      />
-    </div>
-  );
-};
-
-const ExerciseForm = ({ onSubmit }) => {
-  const [sets, setSets] = useState('');
-  const [reps, setReps] = useState('');
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    onSubmit({ sets, reps });
-    setSets('');
-    setReps('');
-  };
-
-  return (
-    <form onSubmit={handleSubmit}>
-      <input type="number" placeholder="Sets" value={sets} onChange={(e) => setSets(e.target.value)} />
-      <input type="number" placeholder="Reps" value={reps} onChange={(e) => setReps(e.target.value)} />
-      <button type="submit">Add Exercise</button>
-    </form>
-  );
-};
-
-const ExerciseList = ({ exercises, currentExerciseIndex }) => {
-  return (
-    <div>
-      {exercises.map((exercise, index) => (
-        <div key={index}>
-          <p>Exercise {index + 1}</p>
-          <p>Sets: {exercise.sets}, Reps: {exercise.reps}</p>
-          {index === currentExerciseIndex && <p>Current Exercise</p>}
+      <h1 id="main_header">Exercise App</h1>
+      {InExerciseScreen === true ? (
+        <div>
+          <Workout exercises={exercises}/>
         </div>
-      ))}
+      ) : (
+        <div id="main_app_div">
+          <Selector set_exercises={setExercises}/>
+          <WorkoutItemList exercises={exercises}/>
+          <button onClick={() => {
+            setInExerciseScreen(true)
+        }}>Start Exercise</button>
+        </div>
+      )}
     </div>
   );
 };
 
-const RestTimer = ({ restTime }) => {
+
+function Selector({set_exercises}) {
+  const workout_options = config.workout_options;
+
+  const [workoutItem, setWorkoutItem] = useState({
+    name: "",
+    type: workout_options[0],  
+    value: {
+      number: 0,
+      sets: 0,
+      reps: 0
+    }
+  });
+
+  const handleNameChange = (event) => {
+    setWorkoutItem({
+      ...workoutItem,
+      name: event.target.value
+    });
+  };
+
+  const handleTypeChange = (event) => {
+    setWorkoutItem({
+      ...workoutItem,
+      type: event.target.value
+    });
+  };
+
+  const handleNumberChange = (event) => {
+    setWorkoutItem({
+      ...workoutItem,
+      value: {
+        ...workoutItem.value,
+        number: event.target.value
+      }
+    });
+  };
+
+  const handleSetsChange = (event) => {
+    setWorkoutItem({
+      ...workoutItem,
+      value: {
+        ...workoutItem.value,
+        sets: event.target.value
+      }
+    });
+  };
+
+  const handleRepsChange = (event) => {
+    setWorkoutItem({
+      ...workoutItem,
+      value: {
+        ...workoutItem.value,
+        reps: event.target.value
+      }
+    });
+  };
+
+  const addItemToArray = (newItem) => {
+    set_exercises(currentArray => [...currentArray, newItem]);
+  };
+
+  return (
+    <div id="selector_row">
+      <input value={workoutItem.name} onChange={handleNameChange} type="text" id="workout-name"></input>
+      <label for="cars">Select Exercise Type:</label>
+      <select onChange={handleTypeChange} value={workoutItem.type} name="cars" id="cars">
+        {workout_options.map((option, index) => (
+          <option key={index} value={option}>
+            {option}
+          </option>
+        ))} 
+      </select> 
+      {workoutItem.type === 'Sets and Reps' ? (
+        <div id="number_input">
+          <input value={workoutItem.value.sets} onChange={handleSetsChange} type="number"></input>
+          <input value={workoutItem.value.reps} onChange={handleRepsChange} type="number"></input>
+        </div>
+      ) : (
+        <div id="number_input">
+          <input value={workoutItem.value.number} onChange={handleNumberChange} type="number"></input>
+        </div>
+      )}
+      <button id="add_button" onClick={() => addItemToArray(workoutItem)} >Add</button>
+    </div>
+  );
+}
+
+function WorkoutItemList({exercises}) {
   return (
     <div>
-      <p>Rest Timer: {restTime} seconds</p>
-      {/* Timer display */}
+      {exercises.map((option, index) => (
+          <WorkoutItem option={option} />
+        ))}
+    </div>
+  );
+}
+
+function WorkoutItem({option}) {
+  return(
+    <div id="workout_item">
+      <h2>{option.name}</h2>
+      <h3>{option.type}</h3>
+      {option.type === 'Sets and Reps' ? (
+        <div>
+          <h3>{option.number}</h3>
+        </div>
+      ) : (
+        <div>
+          <h3>{option.number}</h3>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function Workout({exercises}){
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  const handleNextClick = () => {
+    setCurrentIndex(currentIndex => Math.min(currentIndex + 1, exercises.length - 1))
+  };
+
+  return (
+    <div id="workout">
+      <WorkoutDisplay option={exercises[currentIndex]} />
+      <button id="next_button" onClick={handleNextClick}>Next</button>
+    </div>
+  );
+}
+
+const SetsAndRepsDisplay = ({ option }) => (
+  <div id="current_workout">
+      <h2>{option.name}</h2>
+      <h3>{option.type}</h3>
+      <h3 class="display_static">{option.value.sets}</h3>:<h3 class="display_static">{option.value.reps}</h3>
+</div>
+);
+
+const TimerDisplay = ({ option }) => {
+  const [time, setTime] = useState(parseInt(option.value.number));
+
+  useEffect(() => {
+    if (time > 0) {
+      const timer = setTimeout(() => setTime(time - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [time]);
+
+  return (
+    <div>
+      <h2>{option.name}</h2>
+      <h3>{option.type}</h3>
+      <h3>{time}</h3>
+    </div>
+  );
+};
+
+const StopwatchDisplay = ({option}) => {
+  const [time, setTime] = useState(0);
+  const [running, setRunning] = useState(false);
+
+  useEffect(() => {
+    let interval = null;
+    if (running) {
+      interval = setInterval(() => {
+        setTime((prevTime) => prevTime + 1);
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [running]);
+
+  return (
+    <div>
+      <h2>{option.name}</h2>
+      <h3>{option.type}</h3>
+      <h3>{time}</h3>
+      <button onClick={() => setRunning(!running)}>
+        {running ? 'Stop' : 'Start'}
+      </button>
+    </div>
+  );
+};
+
+const WorkoutDisplay = ({option}) => {
+  console.log(option)
+  return (
+    <div>
+      {option.type === 'Sets and Reps' && <SetsAndRepsDisplay option={option} />}
+      {option.type === 'Timer' && <TimerDisplay option={option} />}
+      {option.type === 'Stopwatch' && <StopwatchDisplay option={option}/>}
     </div>
   );
 };
